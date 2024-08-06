@@ -6,6 +6,8 @@ let
 in
 {
   dotenv.enable = true;
+  devenv.warnOnNewVersion = false;
+
   env.DATABASE_URL = "postgres://${database_user}:${database_password}@localhost/pool_monitor";
 
 
