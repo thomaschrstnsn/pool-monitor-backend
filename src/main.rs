@@ -1,3 +1,4 @@
+use anyhow::Context;
 use axum::{
     extract::State,
     http::StatusCode,
@@ -11,7 +12,7 @@ use sqlx::postgres::{PgPool, PgPoolOptions};
 use std::time::Duration;
 
 #[tokio::main]
-async fn main() {
+async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt::init();
 
     let db_connection_str = std::env::var("DATABASE_URL").expect("env DATABASE_URL");
@@ -20,13 +21,8 @@ async fn main() {
         .max_connections(20)
         .acquire_timeout(Duration::from_secs(3))
         .connect(&db_connection_str)
-        .await;
-
-    if let Err(e) = pool {
-        tracing::error!("Failed to connect to database: {:?}", e);
-        return;
-    }
-    let pool = pool.expect("handled");
+        .await
+        .context("Establishing db pool")?;
 
     // build our application with a route
     let app = Router::new()
@@ -37,7 +33,11 @@ async fn main() {
     // run our app with hyper, listening globally on port 3000
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     tracing::info!("listening on {}", listener.local_addr().unwrap());
-    axum::serve(listener, app).await.unwrap();
+    axum::serve(listener, app)
+        .await
+        .context("serving some http")?;
+
+    Ok(())
 }
 
 // basic handler that responds with a static string
