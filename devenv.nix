@@ -10,12 +10,12 @@ in
 
 
   # https://devenv.sh/packages/
-  packages = (lib.optionals
-    pkgs.stdenv.isDarwin
-    (with pkgs.darwin.apple_sdk; [
+  packages = with pkgs;  (lib.optionals
+    stdenv.isDarwin
+    (with darwin.apple_sdk; [
       frameworks.SystemConfiguration
     ])
-  ++ [ pkgs.git ]);
+  ++ [ git bacon ]);
 
 
   # https://devenv.sh/scripts/
