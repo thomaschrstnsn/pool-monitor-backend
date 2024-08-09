@@ -46,13 +46,10 @@ in
   };
 
   # https://devenv.sh/languages/
-  languages.rust.enable = true;
-
-  # https://devenv.sh/pre-commit-hooks/
-  # pre-commit.hooks.shellcheck.enable = true;
-
-  # https://devenv.sh/processes/
-  # processes.ping.exec = "ping example.com";
+  languages.rust = {
+    enable = true;
+    channel = "stable";
+  };
 
   # See full reference at https://devenv.sh/reference/options/
 }
