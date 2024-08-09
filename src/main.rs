@@ -15,7 +15,7 @@ use std::time::Duration;
 async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt::init();
 
-    let db_connection_str = std::env::var("DATABASE_URL").expect("env DATABASE_URL");
+    let db_connection_str = std::env::var("DATABASE_URL").context("env DATABASE_URL")?;
 
     let pool = PgPoolOptions::new()
         .max_connections(20)
@@ -23,6 +23,8 @@ async fn main() -> anyhow::Result<()> {
         .connect(&db_connection_str)
         .await
         .context("Establishing db pool")?;
+
+    sqlx::migrate!("./migrations").run(&pool).await?;
 
     // build our application with a route
     let app = Router::new()
@@ -56,11 +58,24 @@ async fn record_temperature(
         return Err(AppError::RequestError(RequestError::NoDataReceived));
     }
 
-    let resp = sqlx::query_scalar("select 'hello world from pg'::text")
-        .fetch_one(&pool)
-        .await?;
+    let now = time::OffsetDateTime::now_utc();
 
-    Ok((StatusCode::CREATED, resp))
+    let reading_id = uuid::Uuid::new_v4();
+    let id: (i32,) = sqlx::query_as(
+        "INSERT INTO temperatures 
+            (id,      time, temperature, addr, reading_id)
+        VALUES
+            (DEFAULT, $1, $2, $3, $4)
+        RETURNING id",
+    )
+    .bind(now)
+    .bind(&payload.0[0].temp)
+    .bind(&payload.0[0].addr)
+    .bind(reading_id)
+    .fetch_one(&pool)
+    .await?;
+
+    Ok((StatusCode::CREATED, format!("{}", id.0)))
 }
 
 #[derive(Deserialize, Debug)]
@@ -86,6 +101,7 @@ impl fmt::Display for RequestError {
 enum AppError {
     DatabaseError(sqlx::Error),
     RequestError(RequestError),
+    TimeIsBroken(time::error::IndeterminateOffset),
 }
 
 impl IntoResponse for AppError {
@@ -96,6 +112,9 @@ impl IntoResponse for AppError {
             }
             AppError::RequestError(err) => {
                 (StatusCode::BAD_REQUEST, err.to_string()).into_response()
+            }
+            AppError::TimeIsBroken(err) => {
+                (StatusCode::INTERNAL_SERVER_ERROR, err.to_string()).into_response()
             }
         }
     }
