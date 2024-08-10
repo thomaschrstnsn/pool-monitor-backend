@@ -23,7 +23,7 @@ in
   # https://devenv.sh/scripts/
   # banner source: https://patorjk.com/software/taag/#p=display&f=Tmplr&t=Pool%0AMonitor
   enterShell = ''
-    /bin/cat .banner
+    cat .banner
     echo ""
     echo ✅ DATABASE_URL=$DATABASE_URL
     echo ""
