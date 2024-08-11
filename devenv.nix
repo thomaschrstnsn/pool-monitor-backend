@@ -32,8 +32,15 @@ in
   scripts.pm-graf-dev.exec = ''
     cd $DEVENV_ROOT/grafana
     set -ex
-    docker build -t pm-graf:dev .
-    docker run -p 3000:${toString grafana.port} pm-graf:dev
+    docker build --build-arg DATABASE_HOST=host.docker.internal -t pm-graf:dev .
+    docker run \
+      -p ${toString grafana.port}:3000 \
+      -e DATABASE_USER=${database.user} \
+      -e DATABASE_PASS=${database.password} \
+      -e DATABASE_HOST=host.docker.internal \
+      -e DATABASE_PORT=${toString database.port} \
+      -e DATABASE_NAME=${database.name} \
+      --add-host=host.docker.internal:host-gateway pm-graf:dev
   '';
 
 
@@ -47,7 +54,7 @@ in
     echo ✅ DATABASE_HOST:$DATABASE_HOST
     echo ✅ DATABASE_PORT:$DATABASE_PORT
     echo ✅ DATABASE_NAME:$DATABASE_NAME
-    echo 
+    echo
     echo "(when started with pm-graf-dev): http://localhost:${toString grafana.port}"
     echo ""
     echo ""
