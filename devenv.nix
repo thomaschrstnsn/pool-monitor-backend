@@ -8,6 +8,9 @@ let
     user = "pool_monitor";
     password = "secret_pool_admin_password";
   };
+  grafana = {
+    port = 3210;
+  };
 in
 {
   dotenv.enable = true;
@@ -26,6 +29,13 @@ in
     ])
   ++ [ git bacon ]);
 
+  scripts.pm-graf-dev.exec = ''
+    cd $DEVENV_ROOT/grafana
+    set -ex
+    docker build -t pm-graf:dev .
+    docker run -p 3000:${toString grafana.port} pm-graf:dev
+  '';
+
 
   # https://devenv.sh/scripts/
   # banner source: https://patorjk.com/software/taag/#p=display&f=Tmplr&t=Pool%0AMonitor
@@ -37,6 +47,8 @@ in
     echo ✅ DATABASE_HOST:$DATABASE_HOST
     echo ✅ DATABASE_PORT:$DATABASE_PORT
     echo ✅ DATABASE_NAME:$DATABASE_NAME
+    echo 
+    echo "(when started with pm-graf-dev): http://localhost:${toString grafana.port}"
     echo ""
     echo ""
   '';
