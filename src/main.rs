@@ -59,23 +59,26 @@ async fn record_temperature(
     }
 
     let now = time::OffsetDateTime::now_utc();
-
     let reading_id = uuid::Uuid::new_v4();
-    let id: (i32,) = sqlx::query_as(
-        "INSERT INTO temperatures 
+    let mut ids = Vec::new();
+    for reading in payload.0 {
+        let id: (i32,) = sqlx::query_as(
+            "INSERT INTO temperatures 
             (id,      time, temperature, addr, reading_id)
         VALUES
             (DEFAULT, $1, $2, $3, $4)
         RETURNING id",
-    )
-    .bind(now)
-    .bind(&payload.0[0].temp)
-    .bind(&payload.0[0].addr)
-    .bind(reading_id)
-    .fetch_one(&pool)
-    .await?;
+        )
+        .bind(now)
+        .bind(&reading.temp)
+        .bind(&reading.addr)
+        .bind(reading_id)
+        .fetch_one(&pool)
+        .await?;
+        ids.push(id.0);
+    }
 
-    Ok((StatusCode::CREATED, format!("{}", id.0)))
+    Ok((StatusCode::CREATED, format!("{} {:?}", reading_id, ids)))
 }
 
 #[derive(Deserialize, Debug)]
