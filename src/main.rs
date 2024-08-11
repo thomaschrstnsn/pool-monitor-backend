@@ -11,11 +11,22 @@ use serde::Deserialize;
 use sqlx::postgres::{PgPool, PgPoolOptions};
 use std::time::Duration;
 
+fn get_db_connection_str() -> anyhow::Result<String> {
+    use std::env::var;
+    let user = var("DATABASE_USER")?;
+    let pass = var("DATABASE_PASS")?;
+    let host = var("DATABASE_HOST")?;
+    let port = var("DATABASE_PORT")?;
+    let db_name = var("DATABASE_NAME")?;
+
+    Ok(format!("postgres://{user}:{pass}@{host}:{port}/{db_name}"))
+}
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt::init();
 
-    let db_connection_str = std::env::var("DATABASE_URL").context("env DATABASE_URL")?;
+    let db_connection_str = get_db_connection_str().context("env DATABASE_URL")?;
 
     let pool = PgPoolOptions::new()
         .max_connections(20)

@@ -1,15 +1,22 @@
 { pkgs, lib, config, inputs, ... }:
 
 let
-  database_user = "pool_monitor";
-  database_password = "secret_pool_admin_password";
+  database = {
+    name = "pool_monitor";
+    host = "localhost";
+    port = 5432;
+    user = "pool_monitor";
+    password = "secret_pool_admin_password";
+  };
 in
 {
   dotenv.enable = true;
-  devenv.warnOnNewVersion = false;
 
-  env.DATABASE_URL = "postgres://${database_user}:${database_password}@localhost/pool_monitor";
-
+  env.DATABASE_USER = database.user;
+  env.DATABASE_PASS = database.password;
+  env.DATABASE_HOST = database.host;
+  env.DATABASE_PORT = database.port;
+  env.DATABASE_NAME = database.name;
 
   # https://devenv.sh/packages/
   packages = with pkgs;  (lib.optionals
@@ -25,7 +32,11 @@ in
   enterShell = ''
     cat .banner
     echo ""
-    echo ✅ DATABASE_URL=$DATABASE_URL
+    echo ✅ DATABASE_USER:$DATABASE_USER
+    echo ✅ DATABASE_PASS:$DATABASE_PASS
+    echo ✅ DATABASE_HOST:$DATABASE_HOST
+    echo ✅ DATABASE_PORT:$DATABASE_PORT
+    echo ✅ DATABASE_NAME:$DATABASE_NAME
     echo ""
     echo ""
   '';
@@ -41,8 +52,8 @@ in
     enable = true;
     listen_addresses = "0.0.0.0";
     initialScript = ''
-      CREATE USER ${database_user} WITH PASSWORD '${database_password}';
-      CREATE DATABASE pool_monitor OWNER ${database_user};'';
+      CREATE USER ${database.user} WITH PASSWORD '${database.password}';
+      CREATE DATABASE ${database.name} OWNER ${database.user};'';
   };
 
   # https://devenv.sh/languages/
