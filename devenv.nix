@@ -43,6 +43,12 @@ in
       --add-host=host.docker.internal:host-gateway pm-graf:dev
   '';
 
+  scripts.pm-db-backup.exec = ''
+    set -ex
+    FILENAME="$DEVENV_ROOT/pool_monitor-$(date -Iminutes).bck"
+    pg_dump -U pool_monitor pool_monitor > $FILENAME
+  '';
+
 
   # https://devenv.sh/scripts/
   # banner source: https://patorjk.com/software/taag/#p=display&f=Tmplr&t=Pool%0AMonitor
