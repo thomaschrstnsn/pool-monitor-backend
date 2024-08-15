@@ -49,6 +49,11 @@ in
     pg_dump -U pool_monitor pool_monitor > $FILENAME
   '';
 
+  scripts.pm-db-restore.exec = ''
+    set -ex
+    echo restoring from: '$1'
+    psql -U pool_monitor -d pool_monitor < $1
+  '';
 
   # https://devenv.sh/scripts/
   # banner source: https://patorjk.com/software/taag/#p=display&f=Tmplr&t=Pool%0AMonitor
