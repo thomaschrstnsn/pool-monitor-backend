@@ -21,6 +21,8 @@ in
   env.DATABASE_PORT = database.port;
   env.DATABASE_NAME = database.name;
 
+  env.RUST_LOG = "info";
+
   # https://devenv.sh/packages/
   packages = with pkgs;  (lib.optionals
     stdenv.isDarwin
@@ -40,7 +42,7 @@ in
       -e DATABASE_HOST=host.docker.internal \
       -e DATABASE_PORT=${toString database.port} \
       -e DATABASE_NAME=${database.name} \
-      --add-host=host.docker.internal:host-gateway pm-graf:dev
+      pm-graf:dev
   '';
 
   scripts.pm-db-backup.exec = ''
